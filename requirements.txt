@@ -1,0 +1,9 @@
+streamlit
+ultralytics
+google-generativeai
+ephem
+grad-cam
+fpdf
+opencv-python-headless
+Pillow
+numpy

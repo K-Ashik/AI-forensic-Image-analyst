@@ -1,0 +1,6 @@
+.streamlit/secrets.toml
+__pycache__/
+assets/
+*.jpg
+*.png
+.DS_Store
