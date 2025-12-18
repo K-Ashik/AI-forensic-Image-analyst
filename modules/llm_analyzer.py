@@ -1,17 +1,18 @@
 import google.generativeai as genai
 import streamlit as st
 from PIL import Image
-from datetime import datetime  # <--- NEW IMPORT
+from datetime import datetime
+import pytz  # <--- NEW IMPORT
 
-def generate_forensic_report(image_path, api_key, metrics=None):
+def generate_forensic_report(image_path, api_key, metrics=None, user_timezone="UTC"):
     """
-    Sends image + Mathematical Metrics to Gemini for a grounded analysis.
+    Sends image + Mathematical Metrics to Gemini.
+    Now supports Timezone-aware timestamping.
     """
     if not api_key:
         return "⚠️ API Key missing."
 
     genai.configure(api_key=api_key)
-    # Using the working 2.5 model
     model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     try:
@@ -19,14 +20,22 @@ def generate_forensic_report(image_path, api_key, metrics=None):
     except Exception as e:
         return f"Error loading image: {e}"
 
-    # --- THE UPGRADE: DYNAMIC DATE ---
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    current_time = datetime.now().strftime("%H:%M:%S")
+    # --- THE FIX: TIMEZONE AWARENESS ---
+    try:
+        # Get the timezone object from the string (e.g., 'Asia/Dhaka')
+        tz = pytz.timezone(user_timezone)
+        # Get current time in THAT timezone
+        now = datetime.now(tz)
+    except Exception:
+        # Fallback to UTC if timezone string is bad
+        now = datetime.now(pytz.utc)
+
+    current_date = now.strftime("%Y-%m-%d")
+    current_time = now.strftime("%H:%M:%S %Z") # %Z adds the timezone name (e.g., CST, CET)
 
     # Metrics Context
     metrics_context = ""
     if metrics:
-        # We try to safely extract data, handling cases where keys might be missing
         skel = metrics.get('skeletal_analysis', 'Not Run')
         shadow = metrics.get('shadow_verdict', 'Not Run')
         integrity = metrics.get('integrity_verdict', 'Not Run')
@@ -38,13 +47,12 @@ def generate_forensic_report(image_path, api_key, metrics=None):
         - Digital Integrity Verdict: {integrity}
         """
 
-    # The Prompt with Dynamic Date
     prompt = f"""
     You are a Senior Digital Forensic Investigator. 
     
     METADATA FOR REPORT:
     - Date of Report: {current_date}
-    - Time of Report: {current_time}
+    - Time of Report: {current_time} (Local Investigator Time)
     
     {metrics_context}
 

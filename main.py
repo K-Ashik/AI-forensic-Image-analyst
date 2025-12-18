@@ -4,10 +4,11 @@ import shutil
 from PIL import Image
 from fpdf import FPDF
 from modules import profiler, llm_analyzer, explainability, chronos, integrity
+import pytz
 
 # 1. Page Config
 st.set_page_config(
-    page_title="AI Forensic Analyst",
+    page_title="AI Forensic Crime Footage Analyst",
     page_icon="🕵️‍♀️",
     layout="wide"
 )
@@ -92,7 +93,11 @@ except:
     st.sidebar.error("❌ Config Error!")
 
 st.sidebar.markdown("---")
-
+# Timezone Selector
+# We get a list of common timezones
+timezones = pytz.common_timezones
+# Set a default (you can change 'UTC' to your actual preference)
+selected_timezone = st.sidebar.selectbox("Investigator Timezone:", timezones, index=timezones.index('UTC'))
 # Navigation
 mode = st.sidebar.radio("Select Module:", 
     [
@@ -121,7 +126,7 @@ evidence_path = os.path.join("assets", "evidence.jpg")
 
 # --- MODULE 0: INTRO ---
 if mode == "0. Case Overview":
-    st.title("🕵️‍♀️ AI Forensic Reconstruction Tool")
+    st.title("🕵️‍♀️ AI Forensic Crime Footage Reconstruction Tool")
     st.markdown("""
     ### Welcome to the Digital Forensics Lab
     This tool utilizes **Multimodal AI** to analyze digital evidence for authenticity, content, and physical consistency.
@@ -282,7 +287,8 @@ elif mode == "6. Final AI Case Report":
                     report_text = llm_analyzer.generate_forensic_report(
                         evidence_path, 
                         api_key, 
-                        metrics=context_data
+                        metrics=context_data,
+                        user_timezone=selected_timezone
                     )
                     
                     # SAVE IT TO MEMORY (Crucial Step)

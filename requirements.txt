@@ -7,3 +7,4 @@ fpdf
 opencv-python-headless
 Pillow
 numpy
+pytz
